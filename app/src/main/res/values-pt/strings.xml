@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">GF Companion</string>
+    <string name="extension_name">Karoo GF Companion</string>
+
+    <string name="datatype_gf_pacing_name">Guia Potência GF</string>
+    <string name="datatype_gf_pacing_desc">Indicador de alvo de potência com FC, cadência, potência média do trecho e próximo ponto.</string>
+
+    <string name="bonus_toggle_segment_overlay">GF Companion: Plano de Segmentos</string>
+    <string name="bonus_open_cue_sheet">GF Companion: Abrir Cue Sheet+</string>
+</resources>

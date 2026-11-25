@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <queries>
+        <package android:name="com.karoocuesheetplus" />
+    </queries>
+
+    <application
+        android:name=".GfCompanionApplication"
+        android:allowBackup="true"
+        android:icon="@drawable/ic_gf_logo"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
+
+        <activity
+            android:name=".ui.MainActivity"
+            android:exported="true"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <service
+            android:name=".extension.GfCompanionExtensionService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="io.hammerhead.karooext.KAROO_EXTENSION" />
+            </intent-filter>
+            <meta-data
+                android:name="io.hammerhead.karooext.EXTENSION_INFO"
+                android:resource="@xml/extension_info" />
+        </service>
+
+        <receiver
+            android:name=".extension.GfActionReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.karoogfcompanion.ACTION_TAP_NEXT_CARD" />
+                <action android:name="com.karoogfcompanion.ACTION_CLOSE_OVERLAY" />
+            </intent-filter>
+        </receiver>
+
+        <meta-data
+            android:name="io.hammerhead.karooext.MANIFEST_URL"
+            android:value="https://github.com/apopovsky/KarooGFCompanion/releases/latest/download/manifest.json" />
+
+    </application>
+
+</manifest>

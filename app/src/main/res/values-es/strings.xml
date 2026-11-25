@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">GF Companion</string>
+    <string name="extension_name">Karoo GF Companion</string>
+
+    <string name="datatype_gf_pacing_name">Guía Potencia GF</string>
+    <string name="datatype_gf_pacing_desc">Indicador de rango objetivo de potencia con pulso, cadencia, potencia media del paso y próximo punto.</string>
+
+    <string name="bonus_toggle_segment_overlay">GF Companion: Ver Plan de Segmentos</string>
+    <string name="bonus_open_cue_sheet">GF Companion: Abrir Cue Sheet+</string>
+</resources>

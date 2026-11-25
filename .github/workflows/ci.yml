@@ -1,0 +1,205 @@
+name: CI/CD - Build and Release
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Stable release tag (e.g. v1.0.0); blank runs checks only'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  packages: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Verify shared tests and debug APK
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.sha }}
+        fetch-depth: 0
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: gradle
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+
+    - name: Create local.properties
+      run: echo "sdk.dir=$ANDROID_HOME" > local.properties
+
+    - name: Setup Gradle properties for karoo-ext
+      env:
+        GPR_USER: ${{ secrets.GPR_USER }}
+        GPR_TOKEN: ${{ secrets.GPR_TOKEN }}
+      run: |
+        mkdir -p ~/.gradle
+        echo "gpr.user=${GPR_USER:-${{ github.actor }}}" >> ~/.gradle/gradle.properties
+        echo "gpr.key=${GPR_TOKEN:-${{ secrets.GITHUB_TOKEN }}}" >> ~/.gradle/gradle.properties
+
+    - name: Verify and build debug
+      run: ./gradlew :shared:testDebugUnitTest :app:assembleDebug --stacktrace
+
+    - name: Upload verification reports
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: verification-reports
+        path: |
+          shared/build/test-results/**/*.xml
+          shared/build/reports/tests/
+        retention-days: 7
+
+    - name: Upload Debug APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: gf-companion-debug-apk
+        path: app/build/outputs/apk/debug/KarooGFCompanion-*.apk
+        retention-days: 30
+
+  release:
+    name: Publish Karoo release
+    needs: [build]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && inputs.tag != ''
+    permissions:
+      contents: write
+      packages: read
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.sha }}
+        fetch-depth: 0
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: gradle
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+
+    - name: Create local.properties
+      run: echo "sdk.dir=$ANDROID_HOME" > local.properties
+
+    - name: Setup Gradle properties for karoo-ext
+      env:
+        GPR_USER: ${{ secrets.GPR_USER }}
+        GPR_TOKEN: ${{ secrets.GPR_TOKEN }}
+      run: |
+        mkdir -p ~/.gradle
+        echo "gpr.user=${GPR_USER:-${{ github.actor }}}" >> ~/.gradle/gradle.properties
+        echo "gpr.key=${GPR_TOKEN:-${{ secrets.GITHUB_TOKEN }}}" >> ~/.gradle/gradle.properties
+
+    - name: Validate release tag
+      id: release_source
+      env:
+        RELEASE_TAG: ${{ inputs.tag }}
+      run: |
+        git check-ref-format "refs/tags/$RELEASE_TAG"
+        tag_commit=$(git rev-parse "refs/tags/$RELEASE_TAG^{commit}")
+        if [[ "$tag_commit" != "$GITHUB_SHA" || "$tag_commit" != "$(git rev-parse HEAD)" ]]; then
+          echo "Release tag must point to GITHUB_SHA"
+          exit 1
+        fi
+        echo "commit=$tag_commit" >> "$GITHUB_OUTPUT"
+        if [[ ! "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          echo "Publication requires a stable tag such as v1.0.0"
+          exit 1
+        fi
+        python3 - <<'PY'
+        import json, os, re
+        from pathlib import Path
+        manifest = json.loads(Path('app/manifest.json').read_text())
+        build = Path('app/build.gradle.kts').read_text()
+        version = re.search(r'versionName = "([^"]+)"', build).group(1)
+        code = int(re.search(r'versionCode = (\d+)', build).group(1))
+        tag = os.environ['RELEASE_TAG']
+        assert tag == 'v' + version
+        assert manifest['latestVersion'] == version
+        assert manifest['latestVersionCode'] == code
+        prefix = f'https://github.com/{os.environ["GITHUB_REPOSITORY"]}/releases/download/{tag}/'
+        assert manifest['latestApkUrl'] == prefix + f'KarooGFCompanion-v{version}-release.apk'
+        PY
+
+    - name: Restore release signing key
+      env:
+        RELEASE_STORE_BASE64: ${{ secrets.RELEASE_STORE_BASE64 }}
+        RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+        RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+        RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+      run: |
+        python3 - <<'PY'
+        import base64, os
+        from pathlib import Path
+        names = ('RELEASE_STORE_BASE64', 'RELEASE_STORE_PASSWORD', 'RELEASE_KEY_ALIAS', 'RELEASE_KEY_PASSWORD')
+        missing = [name for name in names if not os.environ.get(name)]
+        if missing:
+            raise SystemExit('Missing release signing secrets: ' + ', '.join(missing))
+        path = Path(os.environ['RUNNER_TEMP']) / 'gf-release.keystore'
+        path.write_bytes(base64.b64decode(os.environ['RELEASE_STORE_BASE64'], validate=True))
+        path.chmod(0o600)
+        PY
+
+    - name: Build Karoo release APK
+      env:
+        RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+        RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+        RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+      run: RELEASE_STORE_FILE="$RUNNER_TEMP/gf-release.keystore" ./gradlew :app:assembleRelease --no-configuration-cache --stacktrace
+
+    - name: Remove temporary signing key
+      if: always()
+      run: rm -f "$RUNNER_TEMP/gf-release.keystore"
+
+    - name: Upload Release APK to GitHub Release
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        RELEASE_TAG: ${{ inputs.tag }}
+        RELEASE_COMMIT: ${{ steps.release_source.outputs.commit }}
+      run: |
+        python3 - <<'PY'
+        import json, os, subprocess
+        from pathlib import Path
+
+        def gh(*args):
+            return subprocess.check_output(['gh', *args], text=True)
+
+        tag = os.environ['RELEASE_TAG']
+        repo = os.environ['GITHUB_REPOSITORY']
+        files = [
+            Path(f'app/build/outputs/apk/release/KarooGFCompanion-{tag}-release.apk'),
+            Path('app/manifest.json'),
+            Path('assets/gf-companion-icon.png'),
+            Path('assets/screenshot-day.png'),
+            Path('assets/screenshot-night.png'),
+            Path('assets/screenshot-plan.png'),
+            Path('assets/screenshot-half.png'),
+        ]
+        existing = [str(p) for p in files if p.exists()]
+        notes = Path(os.environ['RUNNER_TEMP']) / 'gf-release-notes.txt'
+        notes.write_text(json.loads(Path('app/manifest.json').read_text())['releaseNotes'])
+        gh('release', 'create', tag, '--repo', repo, '--target', os.environ['RELEASE_COMMIT'],
+           '--title', f'GF Companion {tag}', '--notes-file', str(notes), *existing)
+        PY

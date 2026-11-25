@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ExtensionInfo
+    id="karoo-gf-companion"
+    displayName="@string/extension_name"
+    icon="@drawable/ic_gf_logo"
+    scansDevices="false"
+    mapLayer="false"
+    fitFile="false">
+
+    <DataType
+        typeId="gf-pacing-guide"
+        displayName="@string/datatype_gf_pacing_name"
+        description="@string/datatype_gf_pacing_desc"
+        graphical="true"
+        icon="@drawable/ic_gf_logo" />
+
+    <BonusAction
+        actionId="toggle-segment-overlay"
+        displayName="@string/bonus_toggle_segment_overlay" />
+
+    <BonusAction
+        actionId="open-cue-sheet"
+        displayName="@string/bonus_open_cue_sheet" />
+
+</ExtensionInfo>

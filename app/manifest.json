@@ -1,0 +1,19 @@
+{
+  "label": "GF Companion",
+  "packageName": "com.karoogfcompanion",
+  "iconUrl": "https://github.com/apopovsky/KarooGFCompanion/releases/download/v1.0.0/gf-companion-icon.png",
+  "latestApkUrl": "https://github.com/apopovsky/KarooGFCompanion/releases/download/v1.0.0/KarooGFCompanion-v1.0.0-release.apk",
+  "latestVersion": "1.0.0",
+  "latestVersionCode": 1,
+  "developer": "apopovsky",
+  "description": "Race-ready graphical power pacing guide for Hammerhead Karoo 3.\n\n• Semicircular Power Gauge: Live needle against red/yellow/green target zones with giant current watts, target band, and LOW/HIGH alerts.\n• Zone-Colored Telemetry: Large unitless HR, Cadence, and Step Average Power with icons and optional Karoo-standard zone backgrounds (plus 80–95 rpm green cadence band).\n• Route-Driven Power Segments: Automatically reads power targets from your route waypoints (e.g. \"Puerto Chapelco (175-190W)\") and shows the next checkpoint ahead.\n• CueSheet+ Integration & Pacing Plan: Tap the NEXT card to jump straight to waypoint details & ETA in Karoo Cue Sheet+, or view the in-field Pacing Plan.\n• Adaptive & Localized: Full, half, wide, and compact layouts in Day/Night themes (EN / ES / PT).",
+  "releaseNotes": "v1.0.0 — Initial public release of Karoo GF Companion:\n• Semicircular 5-zone power pacing gauge with live needle, target band, and LOW/HIGH badges.\n• Large unitless HR, Cadence, and Step Avg Power tiles with icons and optional Karoo-standard zone-colored backgrounds (5- and 7-zone profiles + 80–95 rpm green cadence band).\n• Automatic route waypoint power target parsing (e.g. \"Subida Machonico (195-210W)\") and upcoming checkpoint card.\n• Tap NEXT card for direct Karoo Cue Sheet+ detail/ETA link or in-field Pacing Plan overlay.\n• Adaptive Full, Half, Wide, and Compact layouts with Auto Day/Night themes and EN/ES/PT localization.",
+  "screenshotUrls": [
+    "https://github.com/apopovsky/KarooGFCompanion/releases/download/v1.0.0/screenshot-day.png",
+    "https://github.com/apopovsky/KarooGFCompanion/releases/download/v1.0.0/screenshot-night.png",
+    "https://github.com/apopovsky/KarooGFCompanion/releases/download/v1.0.0/screenshot-plan.png"
+  ],
+  "tags": [
+    "performance"
+  ]
+}

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">GF Companion</string>
+    <string name="extension_name">Karoo GF Companion</string>
+
+    <string name="datatype_gf_pacing_name">GF Pacing Guide</string>
+    <string name="datatype_gf_pacing_desc">Power target gauge with live HR, cadence, step average power and next route point target.</string>
+
+    <string name="bonus_toggle_segment_overlay">GF Companion: Toggle Segment Plan</string>
+    <string name="bonus_open_cue_sheet">GF Companion: Open Cue Sheet+</string>
+</resources>
